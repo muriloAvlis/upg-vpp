@@ -1,6 +1,11 @@
 .PHONY: install-hooks checkstyle ci-build image install retest test e2e retest-e2e buildenv \
 version
 
+# Working directory
+WORKDIR := $(CURDIR)
+CONTAINER_NAME=upg-dev
+DEV_IMAGE=upg-dev-env
+
 SHELL = /bin/bash
 BUILD_TYPE ?= debug
 IMAGE_BASE ?= upg
@@ -67,3 +72,26 @@ code:
 	DEVENV_BG=1 UPG_BUILDENV_PRIVILEGED=1 hack/buildenv.sh
 	ENCNAME=`printf {\"containerName\":\"/vpp-build-$(BUILD_TYPE)-bg\"} | od -A n -t x1 | tr -d '[\n\t ]'`; \
 	code --folder-uri "vscode-remote://attached-container+$${ENCNAME}/src"
+
+build-dev-image:
+	@echo "Building dev image '${DEV_IMAGE}'..."
+	@docker build -t ${DEV_IMAGE} --build-arg VPP_DEV_IMAGE_BASE=${VPP_DEV_IMAGE_BASE} -f Dockerfile.dev .
+
+run-dev-env:
+	@echo "Starting dev container '${CONTAINER_NAME}'..."
+	@docker rm -f ${CONTAINER_NAME} 2>/dev/null || true
+	@docker container run -d \
+		--name ${CONTAINER_NAME} \
+		-v ${WORKDIR}:/home/dev/workspace \
+		-w /home/dev/workspace \
+		--hostname dev-upg \
+		${DEV_IMAGE}
+
+# Exec into dev container
+exec-dev-env:
+	@docker exec -it ${CONTAINER_NAME} bash
+
+# Stop and remove dev container
+stop-dev-env:
+	@docker stop ${CONTAINER_NAME} || true
+	@docker rm ${CONTAINER_NAME} || true

@@ -19,8 +19,6 @@ set(CONTACT "ivan.shvedunov@travelping.com" CACHE STRING "Contact")
 set(PACKAGE_MAINTAINER "UPG Team" CACHE STRING "Maintainer")
 set(PACKAGE_VENDOR "Travelping GmbH" CACHE STRING "Vendor")
 
-# macro(set)
-
 macro(make_packages)
   if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     # parse /etc/os-release
@@ -33,35 +31,77 @@ macro(make_packages)
       set(OS_${_name} ${_value})
     endforeach()
 
-    #extract version from git
+    # Get git information
+    execute_process(
+      COMMAND git rev-parse --short HEAD
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      OUTPUT_VARIABLE GIT_SHA
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
+    )
+
+    execute_process(
+      COMMAND git rev-parse --abbrev-ref HEAD
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      OUTPUT_VARIABLE GIT_BRANCH
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
+    )
+
+    if(GIT_BRANCH STREQUAL "master")
+        set(IS_MASTER "true")
+    else()
+        set(IS_MASTER "false")
+    endif()
+
+    # Try to get version from git tags
     execute_process(
       COMMAND git describe --long --tags
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
       OUTPUT_VARIABLE VER
       OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
     )
 
-    if (NOT VER)
-      set(VER "v1.0")
+    if(NOT VER)
+      # Fallback compatible with regex: tag-commits-gSHA
+      set(VER "v1.0-0-g${GIT_SHA}")
     endif()
 
-    string(REGEX REPLACE "v(.*)-([0-9]+)-(g[0-9a-f]+)" "\\1;\\2;\\3" VER ${VER})
-    list(GET VER 0 tag)
+    # Split version into components
+    string(REGEX REPLACE "v(.*)-([0-9]+)-(g[0-9a-f]+)" "\\1;\\2;\\3" VER_LIST ${VER})
+    list(LENGTH VER_LIST VER_LEN)
+    if(VER_LEN LESS 3)
+      set(VER_LIST "1.0;0;g${GIT_SHA}")
+    endif()
+
+    list(GET VER_LIST 0 tag)
     string(REPLACE "-" "~" tag ${tag})
-    list(GET VER 1 commit_num)
-    list(GET VER 2 commit_name)
+    list(GET VER_LIST 1 commit_num)
+    list(GET VER_LIST 2 commit_name)
 
-    message("${tag}")
+    # Optional: append branch info for non-master
+    if(IS_MASTER STREQUAL "true")
+        set(FULL_VERSION "${tag}.${commit_num}+${commit_name}")
+    else()
+        set(FULL_VERSION "${tag}.${commit_num}+${commit_name}-${GIT_BRANCH}")
+    endif()
 
+    message(STATUS "Git branch: ${GIT_BRANCH} (master? ${IS_MASTER})")
+    message(STATUS "Tag: ${tag}")
+    message(STATUS "Commits since tag: ${commit_num}")
+    message(STATUS "Commit SHA: ${commit_name}")
+    message(STATUS "Full version: ${FULL_VERSION}")
+
+    # Determine build number
     if (NOT DEFINED ENV{BUILD_NUMBER})
       set(bld "b1")
     else()
       set(bld "b$ENV{BUILD_NUMBER}")
     endif()
-
     message("Build number is: ${bld}")
 
-    #define DEB and RPM version numbers
+    # Define DEB and RPM version numbers
     if(${commit_num} EQUAL 0)
       set(deb_ver "${tag}")
       set(rpm_ver "${tag}")
