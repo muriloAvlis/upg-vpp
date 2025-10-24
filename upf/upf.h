@@ -115,6 +115,7 @@ typedef CLIB_PACKED (struct
 /* clang-format on */
 
 #define GTPU_V1_HDR_LEN 8
+#define GTPU_V1_EXT_HDR_LEN 8
 
 #define GTPU_VER_MASK   (7 << 5)
 #define GTPU_PT_BIT     (1 << 4)
@@ -142,6 +143,11 @@ typedef CLIB_PACKED (struct
 #define GTPU_IE_RECOVERY    14
 #define GTPU_IE_TEID_I      16
 #define GTPU_IE_GSN_ADDRESS 133
+
+#define GTPU_EXT_HDR_PRESENT 52
+#define GTPU_EXT_HDR_PDU_SESSION_CONTAINER 133
+#define GTPU_NO_MORE_EXT_HDR 0
+#define GTPU_QFI 1
 
 /* clang-format off */
 typedef CLIB_PACKED(struct
