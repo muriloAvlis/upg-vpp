@@ -5,6 +5,7 @@ version
 WORKDIR := $(CURDIR)
 CONTAINER_NAME=upg-dev
 DEV_IMAGE=upg-dev-env
+DEV_USER_PATH=/home/dev
 
 SHELL = /bin/bash
 BUILD_TYPE ?= debug
@@ -82,8 +83,9 @@ run-dev-env:
 	@docker rm -f ${CONTAINER_NAME} 2>/dev/null || true
 	@docker container run -d \
 		--name ${CONTAINER_NAME} \
-		-v ${WORKDIR}:/home/dev/workspace \
-		-w /home/dev/workspace \
+		-v ${WORKDIR}:${DEV_USER_PATH}/workspace \
+		-v ~/.ssh:${DEV_USER_PATH}/.ssh:ro \
+		-w ${DEV_USER_PATH}/workspace \
 		--hostname dev-upg \
 		${DEV_IMAGE}
 
