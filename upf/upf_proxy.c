@@ -610,7 +610,7 @@ proxy_session_try_close_vpp_session (session_t *s, int is_active_open)
 }
 
 static void
-session_cleanup (session_t *s, session_cleanup_ntf_t ntf, int is_active_open)
+upf_session_cleanup(session_t *s, session_cleanup_ntf_t ntf, int is_active_open)
 {
   flowtable_main_t *fm = &flowtable_main;
   upf_proxy_session_t *ps;
@@ -759,10 +759,10 @@ proxy_reset_callback (session_t *s)
 }
 
 static void
-proxy_session_cleanup_callback (session_t *s, session_cleanup_ntf_t ntf)
+proxy_session_cleanup_callback(session_t *s, session_cleanup_ntf_t ntf)
 {
   upf_debug ("sidx %d", s->session_index);
-  session_cleanup (s, ntf, 0 /* is_active_open */);
+  upf_session_cleanup(s, ntf, 0 /* is_active_open */);
 }
 
 static int
@@ -1152,10 +1152,10 @@ active_open_reset_callback (session_t *s)
 }
 
 static void
-active_open_session_cleanup_callback (session_t *s, session_cleanup_ntf_t ntf)
+active_open_session_cleanup_callback(session_t *s, session_cleanup_ntf_t ntf)
 {
   upf_debug ("sidx %d", s->session_index);
-  session_cleanup (s, ntf, 1 /* is_active_open */);
+  upf_session_cleanup(s, ntf, 1 /* is_active_open */);
 }
 
 static int

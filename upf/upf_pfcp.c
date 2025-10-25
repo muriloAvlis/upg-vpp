@@ -332,7 +332,7 @@ pfcp_pdr_id_compare (const void *p1, const void *p2)
         vec_sort_with_function (new, compar);                                 \
       if (old)                                                                \
         vec_sort_with_function (old, compar);                                 \
-      if (new &&old)                                                          \
+      if (new && old)                                                         \
         while (_i < vec_len (new) && _j < vec_len (old))                      \
           {                                                                   \
             int r = compar (&vec_elt (new, _i), &vec_elt (old, _j));          \
@@ -930,7 +930,11 @@ peer_addr_ref (const upf_far_forward_t *fwd)
 
   fib_node_init (&p->node, gtm->fib_node_type);
   fib_prefix_t tun_dst_pfx;
-  fib_prefix_from_ip46_addr (&fwd->outer_header_creation.ip, &tun_dst_pfx);
+
+  fib_prefix_from_ip46_addr (
+    ip46_address_is_ip4 (&fwd->outer_header_creation.ip) ? FIB_PROTOCOL_IP4 :
+                                                           FIB_PROTOCOL_IP6,
+    &fwd->outer_header_creation.ip, &tun_dst_pfx);
 
   p->fib_entry_index =
     fib_entry_track (p->encap_fib_index, &tun_dst_pfx, gtm->fib_node_type,
